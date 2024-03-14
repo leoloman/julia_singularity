@@ -1,0 +1,27 @@
+Bootstrap: docker
+from: julia:1.8-bullseye
+
+%environment
+export JULIA_DEPOT_PATH=/usr/local/share/julia
+
+%post
+    julia -e 'using Pkg; Pkg.add("CUDA")'
+    julia -e 'using CUDA; CUDA.set_runtime_version!(v"12.2")' # set your version of cuda drivers here, this will download the needed artifacts
+    julia -e 'using CUDA; CUDA.precompile_runtime()' # precompile so it is ready to use within the container
+    julia -e 'Pkg.add(PackageSpec(name="ApproxBayes", version = "0.3.2"))'
+    # add / install other packages here either by specifying version or using a manifest file copied over
+    mkdir -m 0777 /depot # create a folder which is read writeable
+
+%environment
+    export JULIA_DEPOT_PATH=/depot:/usr/local/share/julia
+
+%labels
+    AUTHOR LeoLoman
+    VERSION v0.1
+
+%help
+    This is a container to run cuda on a singularity container 
+    To use the gpu when use `singularity run --nv my_container.sif julia -e 'using CUDA; print(CUDA.versioninfo())'`
+
+%post
+    echo "Image Built"
